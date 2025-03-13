@@ -1,4 +1,4 @@
-from socket import SO_USELOOPBACK
+# from socket import SO_USELOOPBACK
 from requests import get
 from bs4 import BeautifulSoup
 import time
