@@ -3,6 +3,7 @@ from requests import get
 from bs4 import BeautifulSoup
 import time
 import random
+import os
 
 ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36'
 
@@ -128,7 +129,8 @@ insert_content = """
 """
 for i in range(1, 251, 15):
     # 加入td
-    page_url = f'https://movie.douban.com/people/61283490/collect?start={i}'
+    douban_id = os.environ["DOUBAN_ID"]
+    page_url = f'https://movie.douban.com/people/{douban_id}/collect?start={i}'
     response = get(page_url, proxies={'http': '210.5.10.87:53281'}, headers={
                 'User-Agent': ua})
     data = response.content.decode('utf-8')
