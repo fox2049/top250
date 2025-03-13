@@ -1,4 +1,4 @@
-name: Update CSDN Stats
+name: Update top250 Stats
 
 on:
   schedule:
