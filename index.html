@@ -3,30 +3,65 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>my top250</title>
-    <style>
+    <title>My Top 250 Movies</title> <style>
+      /* 全局样式设置 */
+      body {
+        font-family: Arial, sans-serif; /* 更现代的字体 */
+        margin: 0; /* 移除 body 默认 margin */
+        padding: 20px; /* 增加 body 内边距，页面内容不紧贴浏览器边缘 */
+        background-color: #f4f4f4; /* 浅灰色背景 */
+        color: #333; /* 深灰色文字颜色 */
+        line-height: 1.6; /* 行高 */
+      }
+
+      h2 {
+        text-align: center;
+        color: #333; /* 标题颜色 */
+        margin-bottom: 30px; /* 标题下方间距 */
+        margin-top: 20px; /* 标题上方间距 */
+        font-weight: bold; /* 标题加粗 */
+      }
+
+      /* 图片容器样式 */
       div.img {
-        border: 1px solid #ccc;
+        /* 移除边框 */
+        /* border: 1px solid #ccc; */
+        overflow: hidden; /* 确保 hover 放大效果不超出容器 */
+        background-color: #fff; /* 图片容器背景白色 */
+        border-radius: 8px; /* 圆角边框 */
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* 轻微阴影 */
+        transition: transform 0.3s ease; /* 添加过渡效果，使 hover 效果更平滑 */
       }
 
       div.img:hover {
-        border: 1px solid #777;
+        /* border: 1px solid #777; */ /* 移除 hover 边框 */
+        transform: scale(1.05); /* hover 时 हल्का放大 */
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); /* hover 时阴影更明显 */
       }
 
       div.img img {
         width: 100%;
-        aspect-ratio: 1/1.47;
+        aspect-ratio: 1 / 1.47;
+        display: block; /* 移除图片下方默认间隙 */
+        border-radius: 8px 8px 0 0; /* 图片上方圆角 */
       }
 
+      /* 描述文字样式 */
       div.desc {
         padding: 15px;
         text-align: center;
+        font-size: 14px; /* 描述文字字号 */
+        color: #555; /* 描述文字颜色 */
       }
 
-      * {
-        box-sizing: border-box;
+      /* 清除浮动 */
+      .clearfix:after {
+        content: "";
+        display: table;
+        clear: both;
       }
 
+      /* 响应式列布局 */
       .responsive {
         padding: 0 6px;
         float: left;
@@ -34,31 +69,40 @@
         margin: 6px 0;
       }
 
+      /* 大屏幕 (大于 2000px) */
       @media only screen and (max-width: 2000px) {
         .responsive {
-          width: 9.99999%;
+          width: 9.99999%; /* 每行 10 列 */
           margin: 6px 0;
         }
       }
 
+      /* 中等屏幕 (大于 1000px) */
       @media only screen and (max-width: 1000px) {
         .responsive {
-          width: 19.99999%;
+          width: 19.99999%; /* 每行 5 列 */
           margin: 6px 0;
         }
       }
 
+      /* 小屏幕 (大于 500px) */
       @media only screen and (max-width: 500px) {
         .responsive {
-          width: 24.99999%;
+          width: 24.99999%; /* 每行 4 列 */
           margin: 6px 0;
         }
       }
 
-      .clearfix:after {
-        content: "";
-        display: table;
-        clear: both;
+      /* 超小屏幕 (小于 500px) 可以考虑一行一列，这里保持原状，您可以根据需要调整 */
+
+      /* 页脚样式 */
+      .footer {
+        text-align: center;
+        padding: 20px 0;
+        font-size: 14px;
+        color: #777; /* 页脚文字颜色 */
+        border-top: 1px solid #eee; /* 页脚上方添加分割线 */
+        margin-top: 30px; /* 页脚上方外边距 */
       }
     </style>
   </head>
@@ -501,7 +545,7 @@
 
 <div class="clearfix"></div>
 
-    <div style="padding: 6px">
+    <div class="footer">
       <h4>含哺而熙，鼓腹而游 @ 2025</h4>
     </div>
   </body>
