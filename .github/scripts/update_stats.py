@@ -1,174 +1,235 @@
-# from socket import SO_USELOOPBACK
-from requests import get
+import requests
 from bs4 import BeautifulSoup
 import time
 import random
 import os
 
-ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36'
+# --- 配置区 ---
 
+# 设置你的豆瓣用户ID
+# 建议使用环境变量来管理敏感信息
+# 你也可以直接在这里赋值, 例如: DOUBAN_ID = "your_douban_id"
+DOUBAN_ID = os.environ.get("DOUBAN_ID", "your_douban_id_here")
 
-li = """
+# 爬取页数范围 (每页15个)
+# 例如 range(0, 15*10, 15) 会爬取前10页
+PAGE_RANGE = range(0, 255, 15) 
+
+# 输出文件名
+OUTPUT_FILENAME = 'index.html'
+
+# 请求头，模拟浏览器访问
+USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+
+# 代理设置 (如果需要)
+# 如果你不需要代理，请将 PROXIES 设置为 None
+# PROXIES = {'http': 'http://127.0.0.1:7890', 'https:': 'http://127.0.0.1:7890'}
+PROXIES = None
+
+# --- HTML 模板 ---
+
+# 这是新的 Apple 风格 HTML 文件的头部和主要结构
+# 直接从你的新设计中复制而来
+HTML_HEAD = """
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>My Top 250 Movies</title> <style>
-      /* 全局样式设置 */
-      body {
-        font-family: Arial, sans-serif; /* 更现代的字体 */
-        margin: 0; /* 移除 body 默认 margin */
-        padding: 20px; /* 增加 body 内边距，页面内容不紧贴浏览器边缘 */
-        background-color: #f4f4f4; /* 浅灰色背景 */
-        color: #333; /* 深灰色文字颜色 */
-        line-height: 1.6; /* 行高 */
-      }
-
-      h2 {
-        text-align: center;
-        color: #333; /* 标题颜色 */
-        margin-bottom: 30px; /* 标题下方间距 */
-        margin-top: 20px; /* 标题上方间距 */
-        font-weight: bold; /* 标题加粗 */
-      }
-
-      /* 图片容器样式 */
-      div.img {
-        /* 移除边框 */
-        /* border: 1px solid #ccc; */
-        overflow: hidden; /* 确保 hover 放大效果不超出容器 */
-        background-color: #fff; /* 图片容器背景白色 */
-        border-radius: 8px; /* 圆角边框 */
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* 轻微阴影 */
-        transition: transform 0.3s ease; /* 添加过渡效果，使 hover 效果更平滑 */
-      }
-
-      div.img:hover {
-        /* border: 1px solid #777; */ /* 移除 hover 边框 */
-        transform: scale(1.05); /* hover 时 हल्का放大 */
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); /* hover 时阴影更明显 */
-      }
-
-      div.img img {
-        width: 100%;
-        aspect-ratio: 1 / 1.47;
-        display: block; /* 移除图片下方默认间隙 */
-        border-radius: 8px 8px 0 0; /* 图片上方圆角 */
-      }
-
-      /* 描述文字样式 */
-      div.desc {
-        padding: 15px;
-        text-align: center;
-        font-size: 14px; /* 描述文字字号 */
-        color: #555; /* 描述文字颜色 */
-      }
-
-      /* 清除浮动 */
-      .clearfix:after {
-        content: "";
-        display: table;
-        clear: both;
-      }
-
-      /* 响应式列布局 */
-      .responsive {
-        padding: 0 6px;
-        float: left;
-        width: 4.99999%;
-        margin: 6px 0;
-      }
-
-      /* 大屏幕 (大于 2000px) */
-      @media only screen and (max-width: 2000px) {
-        .responsive {
-          width: 9.99999%; /* 每行 10 列 */
-          margin: 6px 0;
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的电影照片墙</title>
+    <!-- 引入 Tailwind CSS 以实现快速、现代化的样式 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Google Fonts 的 Inter 字体，这是 Apple 风格常用的字体 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* 自定义样式，补充 Tailwind CSS */
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
-      }
-
-      /* 中等屏幕 (大于 1000px) */
-      @media only screen and (max-width: 1000px) {
-        .responsive {
-          width: 19.99999%; /* 每行 5 列 */
-          margin: 6px 0;
+        /* 为电影海报容器添加一个统一的宽高比，确保网格对齐 */
+        .poster-aspect {
+            aspect-ratio: 2 / 3;
         }
-      }
-
-      /* 小屏幕 (大于 500px) */
-      @media only screen and (max-width: 500px) {
-        .responsive {
-          width: 24.99999%; /* 每行 4 列 */
-          margin: 6px 0;
+        /* 图像将覆盖整个容器，避免拉伸变形 */
+        .poster-aspect img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
-      }
-
-      /* 超小屏幕 (小于 500px) 可以考虑一行一列，这里保持原状，您可以根据需要调整 */
-
-      /* 页脚样式 */
-      .footer {
-        text-align: center;
-        padding: 20px 0;
-        font-size: 14px;
-        color: #777; /* 页脚文字颜色 */
-        border-top: 1px solid #eee; /* 页脚上方添加分割线 */
-        margin-top: 30px; /* 页脚上方外边距 */
-      }
     </style>
-  </head>
-  <body>
-    <h2 style="text-align: center">My Movie Top 250</h2>
+</head>
+<body class="bg-black text-gray-200">
+    <!-- 页面容器 -->
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- 头部标题 -->
+        <header class="py-12 sm:py-16 lg:py-20 text-center">
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white">
+                我的电影 Top 250
+            </h1>
+            <p class="mt-4 text-lg text-gray-400">一份精选的电影收藏集</p>
+        </header>
+        <!-- 电影海报网格 -->
+        <main>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-6 md:gap-8">
 """
 
-insert_content = """
-<div class="responsive"><div class="img"><a title='Дорогие товарищи!' target="_blank" href='https://www.imdb.com/title/tt10796286'>\n <img src='https://m.media-amazon.com/images/M/MV5BZGZlNTAwNzgtODUwYy00YjZiLWJlMzctYjFjNDFmYjE3M2ZlXkEyXkFqcGc@._V1_QL75_UX322_.jpg' alt='Дорогие товарищи!' referrerPolicy='no-referrer' width="196" height="auto" /> </a> </div> </div>\n
-<div class="responsive"><div class="img"><a title='1987' target="_blank" href='https://www.imdb.com/title/tt6493286'>\n <img src='https://m.media-amazon.com/images/M/MV5BZjU2OTJkNWUtMTBhZi00NDJjLTgwMmYtOGQ3YmQ4ZjE3NWI1XkEyXkFqcGc@._V1_QL75_UX306_.jpg' alt='1987' referrerPolicy='no-referrer' width="196" height="auto" /> </a> </div> </div>\n
-<div class="responsive"><div class="img"><a title='택시운전사' target="_blank" href='https://www.imdb.com/title/tt6878038'>\n <img src='https://m.media-amazon.com/images/M/MV5BYWU2YzE1YWQtYTNhYi00YTk3LTgxZTMtODA3ZTJkZGU3MWVkXkEyXkFqcGc@._V1_QL75_UX306_.jpg' alt='택시운전사' referrerPolicy='no-referrer' width="196" height="auto" /> </a> </div> </div>\n
-<div class="responsive"><div class="img"><a title='悲兮魔兽' target="_blank" href='https://www.imdb.com/title/tt4901304'>\n <img src='https://m.media-amazon.com/images/M/MV5BMTQ5MTk5NTgyMV5BMl5BanBnXkFtZTgwNDI0NTY4MDI@._V1_FMjpg_UX1200_.jpg' alt='悲兮魔兽' referrerPolicy='no-referrer' width="196" height="auto" /> </a> </div> </div>\n
-<div class="responsive"><div class="img"><a title='The Death of Stalin' target="_blank" href='https://www.imdb.com/title/tt4686844/'>\n <img src='https://m.media-amazon.com/images/M/MV5BMTcxMDc1NjcyNl5BMl5BanBnXkFtZTgwNDU0NDYxMzI@._V1_QL75_UX380_CR0,0,380,562_.jpg' alt='The Death of Stalin' referrerPolicy='no-referrer' width="196" height="auto" /> </a> </div> </div>\n
-"""
-for i in range(1, 251, 15):
-    # 加入td
-    douban_id = os.environ["DOUBAN_ID"]
-    page_url = f'https://movie.douban.com/people/{douban_id}/collect?start={i}'
-    response = get(page_url, proxies={'http': '210.5.10.87:53281'}, headers={
-                'User-Agent': ua})
-    data = response.content.decode('utf-8')
-    soup = BeautifulSoup(data, 'html.parser')
-    s = soup.findAll('div', class_="item")
-
-    # 加入间隔
-    pause_time = random.randint(5, 10)
-    print(pause_time, "...")
-    time.sleep(pause_time)
-
-    # 提取数据
-    for index, item in enumerate(s):
-        counter = i + index + 5
-        try:
-            item_url = item.find("a")['href']
-            img_url = item.find("img")['src']
-            item_title = item.find("a")['title']
-            print(f'{counter}-{item_title}')
-            item_info = f"""<div class="responsive"><div class="img"><a title='{item_title}' target="_blank" href='{item_url}'>\n <img src='{img_url}' alt='{item_title}' referrerPolicy='no-referrer' width="196" height="auto" /> </a> </div> </div>\n"""
-            insert_content += item_info
-        except Exception as e:
-            print("!!!" + counter + "error")
-
-insert_content += """
-<div class="clearfix"></div>
-
-    <div class="footer">
-      <h4>含哺而熙，鼓腹而游 @ 2025</h4>
+# 这是新的 HTML 文件的页脚部分
+HTML_FOOT = """
+            </div>
+        </main>
+        <!-- 页脚 -->
+        <footer class="text-center py-10 mt-12 sm:mt-16 border-t border-gray-800">
+            <p class="text-sm text-gray-500">含哺而熙，鼓腹而游 © 2025</p>
+        </footer>
     </div>
-  </body>
+</body>
 </html>
 """
 
-with open(r'index.html', 'w', encoding='utf-8') as f:
-    f.seek(0)
+# --- 固定的电影内容 ---
+# 这部分内容会始终显示在页面顶部，并且不会被爬虫覆盖
+FIXED_MOVIE_CONTENT_HTML = """
+                <!-- 固定的电影: Дорогие товарищи! -->
+                <div class="group">
+                    <a title='Дорогие товарищи!' target="_blank" href='https://www.imdb.com/title/tt10796286'>
+                        <div class="poster-aspect overflow-hidden rounded-xl shadow-lg transform transition-all duration-300 ease-in-out group-hover:scale-105 group-hover:shadow-2xl group-hover:shadow-red-500/30">
+                            <img src='https://m.media-amazon.com/images/M/MV5BZGZlNTAwNzgtODUwYy00YjZiLWJlMzctYjFjNDFmYjE3M2ZlXkEyXkFqcGc@._V1_QL75_UX322_.jpg' alt='Дорогие товарищи! 海报' referrerpolicy='no-referrer' />
+                        </div>
+                    </a>
+                </div>
+                <!-- 固定的电影: 1987 -->
+                <div class="group">
+                    <a title='1987' target="_blank" href='https://www.imdb.com/title/tt6493286'>
+                        <div class="poster-aspect overflow-hidden rounded-xl shadow-lg transform transition-all duration-300 ease-in-out group-hover:scale-105 group-hover:shadow-2xl group-hover:shadow-blue-500/30">
+                            <img src='https://m.media-amazon.com/images/M/MV5BZjU2OTJkNWUtMTBhZi00NDJjLTgwMmYtOGQ3YmQ4ZjE3NWI1XkEyXkFqcGc@._V1_QL75_UX306_.jpg' alt='1987 海报' referrerpolicy='no-referrer' />
+                        </div>
+                    </a>
+                </div>
+                <!-- 固定的电影: 택시운전사 -->
+                <div class="group">
+                    <a title='택시운전사' target="_blank" href='https://www.imdb.com/title/tt6878038'>
+                        <div class="poster-aspect overflow-hidden rounded-xl shadow-lg transform transition-all duration-300 ease-in-out group-hover:scale-105 group-hover:shadow-2xl group-hover:shadow-green-500/30">
+                           <img src='https://m.media-amazon.com/images/M/MV5BYWU2YzE1YWQtYTNhYi00YTk3LTgxZTMtODA3ZTJkZGU3MWVkXkEyXkFqcGc@._V1_QL75_UX306_.jpg' alt='택시운전사 海报' referrerpolicy='no-referrer' />
+                        </div>
+                    </a>
+                </div>
+                <!-- 固定的电影: 悲兮魔兽 -->
+                <div class="group">
+                    <a title='悲兮魔兽' target="_blank" href='https://www.imdb.com/title/tt4901304'>
+                        <div class="poster-aspect overflow-hidden rounded-xl shadow-lg transform transition-all duration-300 ease-in-out group-hover:scale-105 group-hover:shadow-2xl group-hover:shadow-yellow-500/30">
+                            <img src='https://m.media-amazon.com/images/M/MV5BMTQ5MTk5NTgyMV5BMl5BanBnXkFtZTgwNDI0NTY4MDI@._V1_FMjpg_UX1200_.jpg' alt='悲兮魔兽 海报' referrerpolicy='no-referrer' />
+                        </div>
+                    </a>
+                </div>
+                <!-- 固定的电影: The Death of Stalin -->
+                <div class="group">
+                    <a title='The Death of Stalin' target="_blank" href='https://www.imdb.com/title/tt4686844/'>
+                        <div class="poster-aspect overflow-hidden rounded-xl shadow-lg transform transition-all duration-300 ease-in-out group-hover:scale-105 group-hover:shadow-2xl group-hover:shadow-purple-500/30">
+                           <img src='https://m.media-amazon.com/images/M/MV5BMTcxMDc1NjcyNl5BMl5BanBnXkFtZTgwNDU0NDYxMzI@._V1_QL75_UX380_CR0,0,380,562_.jpg' alt='The Death of Stalin 海报' referrerpolicy='no-referrer' />
+                        </div>
+                    </a>
+                </div>
+"""
+
+def fetch_movies():
+    """
+    爬取豆瓣电影数据并返回 HTML 内容块。
+    """
+    movie_items_html = ""
+    total_movies = 0
+
+    print(f"开始从豆瓣用户 '{DOUBAN_ID}' 的收藏页面爬取数据...")
+
+    for i in PAGE_RANGE:
+        page_url = f'https://movie.douban.com/people/{DOUBAN_ID}/collect?start={i}&sort=time&rating=all&filter=all&mode=grid'
+        
+        try:
+            print(f"正在爬取页面: {page_url}")
+            response = requests.get(page_url, headers={'User-Agent': USER_AGENT}, proxies=PROXIES, timeout=10)
+            response.raise_for_status()  # 如果请求失败 (如 404, 500), 则会抛出异常
+        except requests.exceptions.RequestException as e:
+            print(f"!!! 无法访问页面 {page_url}。错误: {e}")
+            continue
+
+        soup = BeautifulSoup(response.content.decode('utf-8'), 'html.parser')
+        movie_list = soup.findAll('div', class_="item")
+
+        if not movie_list:
+            print("在此页面未找到更多电影，可能已到达末页。")
+            break
+
+        for item in movie_list:
+            try:
+                # 提取电影信息
+                item_link_tag = item.find("a")
+                item_img_tag = item.find("img")
+
+                item_url = item_link_tag['href']
+                # 将豆瓣图片URL从小图替换为大图，获得更高清的画质
+                img_url = item_img_tag['src'].replace('small', 'large')
+                item_title = item_img_tag['alt']
+
+                # 这是为每个电影生成的 HTML 代码块，完全匹配新的 Apple 风格设计
+                item_html = f"""
+                <!-- 电影: {item_title} -->
+                <div class="group">
+                    <a title='{item_title}' target="_blank" href='{item_url}'>
+                        <div class="poster-aspect overflow-hidden rounded-xl shadow-lg transform transition-all duration-300 ease-in-out group-hover:scale-105 group-hover:shadow-2xl group-hover:shadow-blue-500/30">
+                            <img src='{img_url}' alt='{item_title} 海报' referrerpolicy='no-referrer' />
+                        </div>
+                    </a>
+                </div>
+                """
+                movie_items_html += item_html
+                total_movies += 1
+                print(f"  [+] 成功提取: {item_title}")
+
+            except Exception as e:
+                print(f"  [!] 解析某个项目时出错: {e}")
+        
+        # 礼貌性地暂停，避免给服务器造成过大压力
+        pause_time = random.uniform(2, 5)
+        print(f"\n...页面处理完毕，暂停 {pause_time:.2f} 秒...\n")
+        time.sleep(pause_time)
+
+    print(f"\n爬取完成！共提取 {total_movies} 部电影。")
+    return movie_items_html
+
+
+def write_html_file(content):
+    """
+    将所有内容组合并写入最终的 HTML 文件。
+    """
+    print(f"正在生成 HTML 文件: {OUTPUT_FILENAME}")
     try:
-        f.write(li)
-        f.write(insert_content)
-    except Exception as e:
-        print(e)
+        with open(OUTPUT_FILENAME, 'w', encoding='utf-8') as f:
+            # 写入头部
+            f.write(HTML_HEAD)
+            # 写入所有电影的 HTML
+            f.write(content)
+            # 写入尾部
+            f.write(HTML_FOOT)
+        print("文件生成成功！")
+    except IOError as e:
+        print(f"!!! 写入文件时发生错误: {e}")
+
+
+if __name__ == '__main__':
+    # 检查是否设置了豆瓣ID
+    if DOUBAN_ID == "your_douban_id_here":
+        print("!!! 请在脚本中设置你的 DOUBAN_ID。")
+    else:
+        # 首先加载固定的电影内容
+        all_movie_content = FIXED_MOVIE_CONTENT_HTML
+        # 然后追加从豆瓣爬取的内容
+        all_movie_content += fetch_movies()
+        
+        if all_movie_content:
+            write_html_file(all_movie_content)
+        else:
+            print("未能爬取到任何电影内容，不生成 HTML 文件。")
+
