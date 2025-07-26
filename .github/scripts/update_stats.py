@@ -162,7 +162,7 @@ HTML_HEAD = """
     </style>
 </head>
 <body>
-    <h1 class="main-title">我的电影矩阵</h1>
+    <h1 class="main-title">Fox的电影Top250</h1>
     <main class="movie-grid">
 """
 
