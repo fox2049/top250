@@ -61,8 +61,8 @@ HTML_HEAD = """
         /* --- 电影网格布局 (CSS Grid) --- */
         .movie-grid {
             display: grid;
-            /* 核心响应式布局：自动填充，每列最小180px，最大1fr */
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            /* 核心响应式布局：自动填充，每列最小140px，最大1fr */
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
             gap: var(--grid-gap);
         }
 
