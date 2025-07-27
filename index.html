@@ -30,17 +30,40 @@
 
         /* --- 标题样式 --- */
         .main-title {
-            text-align: center;
-            font-size: clamp(2rem, 5vw, 3rem); /* 响应式字体大小 */
+            /* 响应式字体大小 */
+            font-size: clamp(2.5rem, 8vw, 5rem); 
             font-weight: 700;
-            margin-bottom: 3rem;
-            /* OpenAI 风格的渐变色文字 */
-            background: linear-gradient(90deg, #6a71e0, #42a5f5);
+            
+            /* 关键点1: 将元素变为 inline-block 或 table, 让其宽度收缩至内容宽度 */
+            /* 这样渐变就不会被过度拉伸 */
+            display: inline-block; 
+
+            /* 关键点2: 使用更多颜色节点创建更丰富的渐变 */
+            /* 你可以随意替换这里的颜色 */
+            background: linear-gradient(
+                90deg, 
+                #ff7e5f, 
+                #feb47b, 
+                #86a8e7, 
+                #91eae4, 
+                #ff7e5f /* 末尾重复起始颜色，让动画循环无缝衔接 */
+            );
+
+            /* 关键点3: 设置背景尺寸大于100%，为动画提供移动空间 */
+            background-size: 250% auto;
+
+            /* 关键点4: 将渐变背景裁剪为文字形状 */
             -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
             background-clip: text;
-            text-fill-color: transparent;
-            animation: fadeInDown 1s ease-out;
+            
+            /* 关键点5: 将文字颜色设为透明，从而透出背景的渐变 */
+            -webkit-text-fill-color: transparent;
+            text-fill-color: transparent; /* 标准语法 */
+
+            /* 关键点6: 添加动画效果 */
+            /* animation: [动画名] [持续时间] [速度曲线] [循环次数]; */
+            /* 已将 linear 改为 ease-in-out，配合新的 keyframes 效果更平滑 */
+            animation: gradient-move 8s ease-in-out infinite;
         }
         
         /* --- 电影网格布局 (CSS Grid) --- */
