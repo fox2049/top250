@@ -11,7 +11,7 @@ OUTPUT_FILENAME = 'index.html'
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
 PROXIES = None
 
-# --- HTML 模板 (Archive 风格 - 适配小图加载) ---
+# --- HTML 模板 (The Darkroom 风格: 黑白交互、无序号、紧凑网格) ---
 
 HTML_HEAD = """
 <!DOCTYPE html>
@@ -19,23 +19,20 @@ HTML_HEAD = """
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FOX's COLLECTION</title>
-    <meta name="description" content="A visual archive of cinema">
+    <title>THE CINEMA ARCHIVE</title>
     
     <meta name="referrer" content="no-referrer">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --bg: #0f0f0f;
+            --bg: #050505;
             --text: #e0e0e0;
-            --text-dim: #555;
-            --accent: #fff;
-            /* 调整：因为是小图，卡片最小宽度稍微调小一点，保证清晰度 */
-            --grid-gap: 30px; 
+            --border: #1f1f1f; /* 极细的深灰边框 */
+            --card-min-width: 140px; /* 适配小图的最佳宽度 */
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -46,168 +43,167 @@ HTML_HEAD = """
             font-family: 'Inter', sans-serif;
             -webkit-font-smoothing: antialiased;
             min-height: 100vh;
-            padding: 0 4vw;
-        }
-
-        header {
-            padding: 6rem 0 3rem 0;
-            border-bottom: 1px solid #222;
-            margin-bottom: 3rem;
             display: flex;
             flex-direction: column;
-            align-items: flex-start;
+        }
+
+        /* 顶部设计：极简主义 */
+        header {
+            padding: 5rem 2rem;
+            border-bottom: 1px solid var(--border);
+            max-width: 1920px;
+            margin: 0 auto;
+            width: 100%;
         }
 
         h1.title {
             font-family: 'Playfair Display', serif;
-            font-size: clamp(3rem, 8vw, 6rem);
+            font-size: clamp(2.5rem, 6vw, 5rem);
             font-weight: 400;
-            line-height: 1;
-            margin-bottom: 1rem;
             letter-spacing: -0.02em;
+            margin: 0;
+            line-height: 1;
         }
-
-        h1.title span {
-            display: block;
-            font-style: italic;
-            color: var(--text-dim);
-            font-size: 0.5em;
-            margin-top: 0.2em;
-        }
-
-        .meta {
-            font-size: 0.8rem;
+        
+        .subtitle {
+            font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 0.15em;
-            color: var(--text-dim);
+            letter-spacing: 0.2em;
+            color: #555;
             margin-top: 1rem;
         }
 
-        /* 瀑布流网格 */
-        .gallery {
+        /* 网格容器：利用背景色和 gap 制造 1px 边框 */
+        .archive-grid {
             display: grid;
-            /* 自动填充，每列最小 140px，这样小图不会被拉伸得太模糊 */
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: var(--grid-gap) 15px; 
-            padding-bottom: 8rem;
+            grid-template-columns: repeat(auto-fill, minmax(var(--card-min-width), 1fr));
+            gap: 1px;
+            background-color: var(--border);
+            border-bottom: 1px solid var(--border);
+            max-width: 1920px;
+            margin: 0 auto;
+            width: 100%;
         }
 
-        .item {
+        /* 单个卡片 */
+        .film-card {
             position: relative;
-            text-decoration: none;
-            color: inherit;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .poster-box {
-            position: relative;
+            background-color: var(--bg);
             aspect-ratio: 2 / 3;
             overflow: hidden;
-            background: #1a1a1a;
-            margin-bottom: 10px;
-            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.4s ease;
+            text-decoration: none;
+            /* 关键：去掉圆角，回归硬朗 */
         }
 
-        .poster-box img {
+        /* 图片容器 */
+        .img-wrap {
             width: 100%;
             height: 100%;
-            object-fit: cover; /* 保持比例填满 */
-            display: block;
-            opacity: 0.8;
-            filter: grayscale(20%); /* 降低一点点饱和度，增加质感 */
-            transition: opacity 0.4s ease, filter 0.4s ease, transform 0.7s ease;
+            position: relative;
         }
 
-        .info {
+        .img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            
+            /* --- 核心设计：默认黑白+轻微降暗 --- */
+            filter: grayscale(100%) brightness(0.9);
+            opacity: 0.9;
+            
+            /* 平滑过渡，像胶片显影一样 */
+            transition: filter 0.6s cubic-bezier(0.22, 1, 0.36, 1), 
+                        transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+                        opacity 0.6s ease;
+        }
+
+        /* 信息浮层：默认隐藏 */
+        .info-layer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 1.5rem 1rem;
+            background: linear-gradient(to top, rgba(0,0,0,0.95), transparent);
+            transform: translateY(100%); /* 藏在下面 */
+            transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
             display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            opacity: 0.5;
-            transition: opacity 0.3s ease;
-            font-size: 0.85rem;
+            align-items: flex-end;
+            z-index: 2;
         }
 
         .movie-title {
-            font-weight: 500;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #fff;
             line-height: 1.3;
-            max-width: 90%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap; /* 单行显示标题，保持整洁 */
+            letter-spacing: 0.02em;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
 
-        .index {
-            font-family: 'Playfair Display', serif;
-            font-style: italic;
-            font-size: 0.8rem;
-            color: var(--text-dim);
-            margin-left: 8px;
+        /* --- 交互状态 (Hover) --- */
+        
+        .film-card:hover {
+            z-index: 10;
         }
 
-        /* 交互效果 */
-        .item:hover .poster-box {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 20px -5px rgba(0,0,0,0.5);
-        }
-
-        .item:hover img {
+        /* 鼠标悬停：变彩色 + 轻微放大 */
+        .film-card:hover img {
+            filter: grayscale(0%) brightness(1.05);
+            transform: scale(1.03);
             opacity: 1;
-            filter: grayscale(0%);
-            transform: scale(1.05);
         }
 
-        .item:hover .info {
-            opacity: 1;
-            color: var(--accent);
+        /* 鼠标悬停：浮出文字 */
+        .film-card:hover .info-layer {
+            transform: translateY(0);
         }
 
-        /* 懒加载淡入 */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .item {
-            animation: fadeIn 0.6s ease-out forwards;
-        }
-
+        /* 页脚 */
         footer {
-            border-top: 1px solid #222;
-            padding: 3rem 0;
-            color: var(--text-dim);
-            font-size: 0.8rem;
+            padding: 4rem 2rem;
+            text-align: center;
+            font-size: 0.75rem;
+            color: #444;
             text-transform: uppercase;
             letter-spacing: 0.1em;
         }
 
+        /* 简单的载入动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .film-card {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
         @media (max-width: 600px) {
-            h1.title { font-size: 3.5rem; }
-            .gallery {
-                grid-template-columns: repeat(3, 1fr); /* 手机上每行3个 */
-                gap: 15px 8px;
+            .archive-grid {
+                /* 手机端每行3个，保持密集感 */
+                grid-template-columns: repeat(3, 1fr); 
             }
-            body { padding: 0 3vw; }
-            .movie-title { font-size: 0.75rem; }
+            .info-layer { display: none; } /* 手机端太小，不显示悬停文字，只看图 */
+            header { padding: 3rem 1.5rem; }
+            h1.title { font-size: 3rem; }
         }
     </style>
 </head>
 <body>
     <header>
-        <h1 class="title">
-            Top 250
-            <span>The Cinema Archive</span>
-        </h1>
-        <div class="meta">Fox's Collection</div>
+        <h1 class="title">Cinema Archive</h1>
+        <div class="subtitle">A Visual Collection / Top 250</div>
     </header>
     
-    <main class="gallery">
+    <main class="archive-grid">
 """
 
 HTML_FOOT = """
     </main>
     <footer>
-        <p>Generated via Python</p>
+        <p>Curated by Fox / Generated via Python</p>
     </footer>
 </body>
 </html>
@@ -247,14 +243,14 @@ def generate_movie_html(movie_data, counter):
     生成单个电影HTML
     """
     title = movie_data['title'].replace("'", "&apos;")
-    index_str = f"{counter + 1}"
     
     # 占位图
-    placeholder = "https://placehold.co/270x400/1a1a1a/1a1a1a.png"
+    placeholder = "https://placehold.co/300x450/1a1a1a/1a1a1a.png"
     
+    # 注意：移除了 index 序号的显示
     return f"""
-        <a class="item" href="{movie_data['href']}" target="_blank" title="{title}">
-            <div class="poster-box">
+        <a class="film-card" href="{movie_data['href']}" target="_blank" title="{title}">
+            <div class="img-wrap">
                 <img src="{movie_data['img_src']}" 
                      alt="{title}" 
                      loading="lazy" 
@@ -262,9 +258,8 @@ def generate_movie_html(movie_data, counter):
                      referrerPolicy="no-referrer"
                      onerror="this.onerror=null;this.src='{placeholder}';">
             </div>
-            <div class="info">
-                <span class="movie-title">{title}</span>
-                <span class="index">{index_str}</span>
+            <div class="info-layer">
+                <h3 class="movie-title">{title}</h3>
             </div>
         </a>"""
 
@@ -299,15 +294,13 @@ def fetch_movies(start_counter):
                 item_link_tag = item.find("a")
                 item_img_tag = item.find("img")
                 
-                # --- 关键修改：直接使用原始链接 (即 s_ratio_poster) ---
-                # 不进行任何 replace 操作，确保链接最原始、最稳定
+                # --- 核心：保持使用小图 (s_ratio_poster) ---
                 raw_src = item_img_tag['src']
-                img_src = raw_src 
                 
                 movie_data = {
                     "title": item_img_tag['alt'],
                     "href": item_link_tag['href'],
-                    "img_src": img_src,
+                    "img_src": raw_src, # 直接用原图，最快最稳
                 }
                 movie_items_html += generate_movie_html(movie_data, movie_counter)
                 total_movies += 1
@@ -315,7 +308,6 @@ def fetch_movies(start_counter):
             except Exception as e:
                 pass 
         
-        # 随机暂停
         time.sleep(random.uniform(1, 3))
 
     print(f"--- 任务完成: 共获取 {total_movies} 部电影 ---")
@@ -339,15 +331,12 @@ if __name__ == '__main__':
         movie_counter = 0
         all_movie_content = ""
         
-        # 1. 处理固定电影
         for movie_data in FIXED_MOVIES:
             all_movie_content += generate_movie_html(movie_data, movie_counter)
             movie_counter += 1
         
-        # 2. 爬取豆瓣电影
         all_movie_content += fetch_movies(start_counter=movie_counter)
         
-        # 3. 生成文件
         if all_movie_content:
             write_html_file(all_movie_content)
         else:
