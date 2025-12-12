@@ -11,7 +11,7 @@ OUTPUT_FILENAME = 'index.html'
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
 PROXIES = None
 
-# --- HTML 模板 (Cyber-Minimalism 风格) ---
+# --- HTML 模板 (更新为你的"Top250"深色辉光风格) ---
 
 HTML_HEAD = """
 <!DOCTYPE html>
@@ -19,195 +19,103 @@ HTML_HEAD = """
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FOX's CINEMA UNIVERSE</title>
-    <meta name="description" content="A curated collection of movies">
+    <meta name="referrer" content="no-referrer">
     
-    <!-- 引入字体 -->
+    <title>Fox的电影Top250</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Space+Grotesk:wght@300;700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* --- 变量定义 --- */
+        /* --- 全局与主题设置 --- */
         :root {
-            --bg-color: #050505;
-            --card-bg: rgba(255, 255, 255, 0.03);
-            --text-primary: #ffffff;
-            --text-secondary: #a0a0a0;
-            --accent-gradient: linear-gradient(45deg, #ff0055, #00ddff);
-            --glow-color: rgba(0, 221, 255, 0.3);
-            --card-radius: 16px;
-            --transition-curve: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --background-color: #101010; /* 深邃的炭黑背景 */
+            --text-color: #e0e0e0; /* 柔和的白色文字 */
+            --primary-glow-color: rgba(0, 255, 255, 0.15); /* 青色辉光 */
+            --secondary-glow-color: rgba(0, 255, 255, 0.05);
+            --card-border-radius: 12px;
+            --grid-gap: 1.5rem; /* 网格间距 */
         }
 
-        /* --- 全局重置 --- */
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        
         body {
-            background-color: var(--bg-color);
-            background-image: 
-                radial-gradient(circle at 15% 50%, rgba(76, 29, 149, 0.08), transparent 25%), 
-                radial-gradient(circle at 85% 30%, rgba(0, 221, 255, 0.08), transparent 25%);
-            color: var(--text-primary);
-            font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif;
-            min-height: 100vh;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif, "Microsoft YaHei";
+            margin: 0;
+            padding: 2rem;
             overflow-x: hidden;
-            padding: 2rem 5%;
         }
 
-        /* --- 动态背景噪点 --- */
-        body::before {
-            content: "";
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
-            pointer-events: none;
-            z-index: -1;
-        }
-
-        /* --- 标题区域 --- */
-        header {
-            text-align: center;
-            margin: 4rem 0 5rem 0;
-            position: relative;
-        }
-
+        /* --- 标题样式 --- */
         .main-title {
-            font-size: clamp(2.5rem, 8vw, 5rem);
+            text-align: center;
+            font-size: clamp(2rem, 5vw, 3rem);
             font-weight: 700;
-            line-height: 1;
-            letter-spacing: -0.03em;
-            text-transform: uppercase;
-            background: var(--accent-gradient);
+            margin-bottom: 3rem;
+            display: block; 
+            background: linear-gradient(90deg, #6a71e0, #42a5f5);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 1rem;
-            position: relative;
-            display: inline-block;
-            animation: titleEnter 1.2s var(--transition-curve);
+            background-clip: text;
+            text-fill-color: transparent;
+            animation: fadeInDown 1s ease-out;
         }
         
-        /* 标题下的装饰线 */
-        .main-title::after {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background: var(--accent-gradient);
-            transform: scaleX(0);
-            transform-origin: right;
-            transition: transform 0.5s ease;
-            animation: lineEnter 1s 0.8s forwards ease;
-        }
-
-        @keyframes titleEnter {
-            from { opacity: 0; transform: translateY(30px) skewY(5deg); }
-            to { opacity: 1; transform: translateY(0) skewY(0); }
-        }
-        
-        @keyframes lineEnter {
-            to { transform: scaleX(1); transform-origin: left; }
-        }
-
-        .subtitle {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-            letter-spacing: 0.1em;
-            animation: fadeIn 1s 0.5s forwards;
-            opacity: 0;
-        }
-
-        /* --- 网格布局 --- */
+        /* --- 电影网格布局 (CSS Grid) --- */
         .movie-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 2rem;
-            max-width: 1600px;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: var(--grid-gap);
+            max-width: 1400px;
             margin: 0 auto;
         }
 
-        /* --- 卡片设计 --- */
+        /* --- 电影卡片样式 --- */
         .movie-card {
             position: relative;
-            border-radius: var(--card-radius);
+            display: block;
             overflow: hidden;
+            border-radius: var(--card-border-radius);
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
+                        box-shadow 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             text-decoration: none;
-            background: var(--card-bg);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: all 0.4s var(--transition-curve);
-            aspect-ratio: 2 / 3; /* 强制固定海报比例 */
+            color: inherit;
             opacity: 0;
-            transform: translateY(20px);
-            animation: cardEnter 0.6s ease-out forwards;
+            animation: fadeInUp 0.5s ease-out forwards;
+            aspect-ratio: 2 / 3;
+            background: #1a1a1a;
         }
-
-        .movie-card::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.8) 100%);
-            z-index: 1;
-            opacity: 0.6;
-            transition: opacity 0.3s;
-        }
-
+        
         .movie-card img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: transform 0.6s var(--transition-curve);
             display: block;
+            transition: transform 0.4s ease;
         }
-
-        /* --- 信息浮层 (Glassmorphism) --- */
-        .card-info {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            padding: 1.5rem;
-            z-index: 2;
-            transform: translateY(20px);
-            opacity: 0;
-            transition: all 0.4s var(--transition-curve);
-        }
-
-        .movie-title {
-            color: #fff;
-            font-size: 1.1rem;
-            font-weight: 700;
-            margin: 0;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
-            line-height: 1.3;
-        }
-
-        .view-btn {
-            display: inline-block;
-            margin-top: 0.8rem;
-            font-size: 0.8rem;
-            color: rgba(255,255,255,0.8);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border-bottom: 1px solid rgba(255,255,255,0.3);
-            padding-bottom: 2px;
-        }
-
-        /* --- 悬停交互 --- */
+        
+        /* --- 悬停效果 --- */
         .movie-card:hover {
-            transform: translateY(-10px) scale(1.02);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.3), 0 0 20px var(--glow-color);
-            border-color: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05) translateY(-8px);
+            box-shadow: 0 0 20px var(--primary-glow-color),
+                        0 0 40px var(--secondary-glow-color);
             z-index: 10;
         }
-
+        
         .movie-card:hover img {
             transform: scale(1.1);
         }
 
-        .movie-card:hover::before {
-            opacity: 0.9;
+        /* --- 卡片信息浮层 --- */
+        .card-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 2rem 1rem 1rem 1rem;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 20%, transparent 100%);
+            transform: translateY(100%);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
         }
 
         .movie-card:hover .card-info {
@@ -215,57 +123,52 @@ HTML_HEAD = """
             opacity: 1;
         }
 
-        /* --- 动画 --- */
-        @keyframes cardEnter {
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes fadeIn {
-            to { opacity: 1; }
+        .movie-title {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 700;
+            line-height: 1.3;
+            color: #fff;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
         }
 
         /* --- 页脚 --- */
-        footer {
-            margin-top: 6rem;
+        .footer {
             text-align: center;
-            color: var(--text-secondary);
+            padding: 4rem 0 1rem 0;
             font-size: 0.9rem;
-            padding-bottom: 2rem;
-            border-top: 1px solid rgba(255,255,255,0.05);
-            padding-top: 2rem;
+            color: #555;
+            animation: fadeInUp 1s 0.5s ease-out forwards;
+            opacity: 0;
         }
-
-        /* --- 响应式微调 --- */
-        @media (max-width: 600px) {
-            .movie-grid {
-                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-                gap: 1rem;
-            }
-            .main-title {
-                font-size: 2.5rem;
-            }
+        
+        /* --- 动画 --- */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes fadeInDown {
+             from { opacity: 0; transform: translateY(-20px); }
+             to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1 class="main-title">CINEMA 250</h1>
-        <div class="subtitle">A VISUAL COLLECTION BY FOX</div>
-    </header>
-    
+    <h1 class="main-title">Fox的电影Top250</h1>
     <main class="movie-grid">
 """
 
 HTML_FOOT = """
     </main>
-    <footer>
-        <p>DESIGNED BY PYTHON & GITHUB PAGES © 2025</p>
+    <footer class="footer">
+        <p>含哺而熙，鼓腹而游 @ 2025</p>
     </footer>
 </body>
 </html>
 """
 
-# --- 固定的电影内容 (保持你的数据) ---
+# --- 固定的电影内容 (保持不变) ---
 FIXED_MOVIES = [
     {
         "title": "Дорогие товарищи!",
@@ -295,20 +198,24 @@ FIXED_MOVIES = [
 ]
 
 def generate_movie_html(movie_data, counter):
-    """根据电影数据和计数器生成单个电影的HTML块"""
-    # 动画延迟逻辑优化：每次增加一点点，最大不超过2秒，避免后面等待太久
-    delay = min(counter * 0.04, 2.0) 
+    """
+    生成单个电影的HTML块
+    关键修改：添加 referrerPolicy 和 onerror
+    """
+    delay = min(counter * 0.05, 3.0) 
     title = movie_data['title'].replace("'", "&apos;")
     
-    # 占位图使用更有设计感的深色
-    placeholder = "https://placehold.co/400x600/1a1a1a/444444?text=NO+IMG"
+    # 占位图：当图片加载失败时显示的灰色卡片
+    placeholder = "https://placehold.co/400x600/101010/e0e0e0?text=Image+Not+Found"
     
     return f"""
-        <a class="movie-card" href="{movie_data['href']}" target="_blank" style="animation-delay: {delay}s;">
-            <img src="{movie_data['img_src']}" alt="{title}" onerror="this.onerror=null;this.src='{placeholder}';" loading="lazy">
+        <a class="movie-card" href="{movie_data['href']}" target="_blank" title="{title}" style="animation-delay: {delay}s;">
+            <img src="{movie_data['img_src']}" 
+                 alt="{title}" 
+                 onerror="this.onerror=null;this.src='{placeholder}';" 
+                 referrerPolicy="no-referrer">
             <div class="card-info">
                 <h3 class="movie-title">{title}</h3>
-                <span class="view-btn">View Details</span>
             </div>
         </a>"""
 
@@ -328,70 +235,4 @@ def fetch_movies(start_counter):
             response = requests.get(page_url, headers={'User-Agent': USER_AGENT}, proxies=PROXIES, timeout=10)
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
-            print(f"[错误] 无法访问: {e}")
-            continue
-
-        soup = BeautifulSoup(response.content.decode('utf-8'), 'html.parser')
-        movie_list = soup.findAll('div', class_="item")
-
-        if not movie_list:
-            print("--- 已到达列表末尾 ---")
-            break
-
-        for item in movie_list:
-            try:
-                item_link_tag = item.find("a")
-                item_img_tag = item.find("img")
-                # 尝试获取更高清的图片链接
-                img_src = item_img_tag['src'].replace('s_ratio_poster', 'l_ratio_poster').replace('small', 'large')
-                
-                movie_data = {
-                    "title": item_img_tag['alt'],
-                    "href": item_link_tag['href'],
-                    "img_src": img_src,
-                }
-                movie_items_html += generate_movie_html(movie_data, movie_counter)
-                total_movies += 1
-                movie_counter += 1
-            except Exception as e:
-                pass # 忽略解析错误的个例
-        
-        # 随机暂停，避免被封IP
-        time.sleep(random.uniform(1, 3))
-
-    print(f"--- 任务完成: 共获取 {total_movies} 部电影 ---")
-    return movie_items_html
-
-def write_html_file(content):
-    """写入HTML"""
-    try:
-        with open(OUTPUT_FILENAME, 'w', encoding='utf-8') as f:
-            f.write(HTML_HEAD)
-            f.write(content)
-            f.write(HTML_FOOT)
-        print(f"成功生成文件: {OUTPUT_FILENAME}")
-    except IOError as e:
-        print(f"写入文件失败: {e}")
-
-if __name__ == '__main__':
-    # 请确保在环境变量中设置 DOUBAN_ID，或者在下方手动修改
-    if DOUBAN_ID == "your_douban_id_here":
-        # 方便本地测试，如果环境变量没设，手动在这里改一下
-        print("警告: 未设置 DOUBAN_ID。请修改代码或设置环境变量。")
-    else:
-        movie_counter = 0
-        all_movie_content = ""
-        
-        # 1. 处理固定电影
-        for movie_data in FIXED_MOVIES:
-            all_movie_content += generate_movie_html(movie_data, movie_counter)
-            movie_counter += 1
-        
-        # 2. 爬取豆瓣电影
-        all_movie_content += fetch_movies(start_counter=movie_counter)
-        
-        # 3. 生成文件
-        if all_movie_content:
-            write_html_file(all_movie_content)
-        else:
-            print("未生成任何内容。")
+            print(f"[错误] 无法
