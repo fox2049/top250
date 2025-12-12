@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import time
 import random
 import os
+import re
 
 # --- 配置区 ---
 DOUBAN_ID = os.environ.get("DOUBAN_ID", "your_douban_id_here")
@@ -221,7 +222,7 @@ HTML_FOOT = """
 </html>
 """
 
-# --- 固定的电影内容 (保持数据) ---
+# --- 固定的电影内容 ---
 FIXED_MOVIES = [
     {
         "title": "Дорогие товарищи!",
@@ -250,17 +251,27 @@ FIXED_MOVIES = [
     }
 ]
 
+def clean_douban_url(url):
+    """
+    清洗豆瓣图片链接，强制替换为 img1 域名
+    """
+    if not url:
+        return ""
+    
+    # 1. 替换海报尺寸为大图
+    url = url.replace('s_ratio_poster', 'l_ratio_poster').replace('small', 'large')
+    
+    # 2. 强制将 img3, img9, img2 等替换为 img1 (关键修复!)
+    # 使用正则确保只替换域名部分的 imgX
+    url = re.sub(r'img[0-9]\.doubanio\.com', 'img1.doubanio.com', url)
+    
+    return url
+
 def generate_movie_html(movie_data, counter):
     """
     生成单个电影HTML。
-    优化点：
-    1. 去除 animation-delay (提升感知速度)
-    2. 添加 loading="lazy" (提升加载性能)
-    3. 添加 decoding="async" (防止解码阻塞主线程)
-    4. 保持 referrerPolicy="no-referrer" (解决图片显示)
     """
     title = movie_data['title'].replace("'", "&apos;")
-    # 格式化序号，例如 001
     index_str = f"{counter + 1:03d}"
     
     # 极简深色占位图
@@ -311,10 +322,9 @@ def fetch_movies(start_counter):
                 item_link_tag = item.find("a")
                 item_img_tag = item.find("img")
                 
-                # 尝试获取更高清的图片链接
-                # 直接使用原链接，不做复杂的代理转换，因为豆瓣图片在无 Referer 下可直连
                 raw_src = item_img_tag['src']
-                img_src = raw_src.replace('s_ratio_poster', 'l_ratio_poster').replace('small', 'large').replace('img1', 'img9').replace('img3', 'img9')
+                # 使用清洗函数处理图片链接
+                img_src = clean_douban_url(raw_src)
                 
                 movie_data = {
                     "title": item_img_tag['alt'],
@@ -327,7 +337,6 @@ def fetch_movies(start_counter):
             except Exception as e:
                 pass 
         
-        # 随机暂停，避免被封IP
         time.sleep(random.uniform(1, 3))
 
     print(f"--- 任务完成: 共获取 {total_movies} 部电影 ---")
