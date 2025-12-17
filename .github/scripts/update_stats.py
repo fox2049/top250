@@ -55,7 +55,7 @@ HTML_HEAD = """
         }
 
         h1.title {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Playfair Display', serif;
             font-weight: 900;
             font-size: clamp(3rem, 8vw, 6rem);
             letter-spacing: -0.04em;
@@ -194,7 +194,7 @@ HTML_HEAD = """
 <body>
     <header>
         <h1 class="title">Cinema Archive</h1>
-        <div class="subtitle">A Visual Collection / Top 250</div>
+        <div class="subtitle">Collection by Fox2049</div>
     </header>
     
     <main class="archive-grid">
